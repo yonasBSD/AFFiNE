@@ -1,4 +1,6 @@
+import { UserFriendlyError } from '@affine/error';
 import { type DocMode, DocModes } from '@blocksuite/affine/model';
+import { TimeoutError } from 'rxjs';
 
 export const getResolvedPublishMode = (
   queryMode: DocMode | null,
@@ -35,7 +37,7 @@ export const fetchSharedPublishMode = async ({
   signal?: AbortSignal;
 }): Promise<DocMode | null> => {
   const url = new URL(
-    `/api/workspaces/${encodeURIComponent(workspaceId)}/docs/${encodeURIComponent(docId)}`,
+    `/api/workspaces/${encodeURIComponent(workspaceId)}/public-docs/${encodeURIComponent(docId)}`,
     serverBaseUrl
   );
   const headers = {
@@ -71,3 +73,12 @@ export const getSearchWithMode = (search: string, mode: DocMode) => {
   const nextSearch = searchParams.toString();
   return nextSearch ? `?${nextSearch}` : '';
 };
+
+export const isSharePagePermissionError = (error: unknown) =>
+  error instanceof UserFriendlyError &&
+  (error.isStatus(403) ||
+    error.name === 'DOC_ACTION_DENIED' ||
+    error.name === 'SPACE_ACCESS_DENIED');
+
+export const isSharePageTimeoutError = (error: unknown) =>
+  error instanceof TimeoutError;

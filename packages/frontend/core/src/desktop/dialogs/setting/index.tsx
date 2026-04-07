@@ -221,6 +221,7 @@ const SettingModalInner = ({
                   ) : isWorkspaceSetting(settingState.activeTab) ? (
                     <WorkspaceSetting
                       activeTab={settingState.activeTab}
+                      scrollAnchor={settingState.scrollAnchor}
                       onCloseSetting={onCloseSetting}
                       onChangeSettingState={setSettingState}
                     />
