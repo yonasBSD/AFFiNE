@@ -2463,6 +2463,14 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.import.affine-workspace-data"](): string;
     /**
+      * `Bear (.bear2bk) (Experimental)`
+      */
+    ["com.affine.import.bear"](): string;
+    /**
+      * `Import your Bear note backup. Tags will be converted to AFFiNE tags and folders.`
+      */
+    ["com.affine.import.bear.tooltip"](): string;
+    /**
       * `Docx`
       */
     ["com.affine.import.docx"](): string;
@@ -2495,7 +2503,7 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.import.modal.tip"](): string;
     /**
-      * `Notion`
+      * `Notion (Experimental)`
       */
     ["com.affine.import.notion"](): string;
     /**
@@ -2503,7 +2511,7 @@ export function useAFFiNEI18N(): {
       */
     ["com.affine.import.notion.tooltip"](): string;
     /**
-      * `Obsidian Vault`
+      * `Obsidian Vault (Experimental)`
       */
     ["com.affine.import.obsidian"](): string;
     /**
