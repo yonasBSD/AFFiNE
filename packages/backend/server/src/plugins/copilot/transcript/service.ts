@@ -9,6 +9,10 @@ import {
   OnJob,
   sniffMime,
 } from '../../../base';
+import {
+  type RealtimePublisher,
+  realtimeTranscriptTaskRoom,
+} from '../../../core/realtime';
 import { Models } from '../../../models';
 import { CopilotAccessPolicy } from '../access';
 import { PromptService } from '../prompt';
@@ -62,7 +66,8 @@ export class CopilotTranscriptionService {
     private readonly tasks: TaskPolicy,
     private readonly prompts: PromptService,
     private readonly actionBridge: ActionRuntimeBridge,
-    @Optional() private readonly access?: CopilotAccessPolicy
+    @Optional() private readonly access?: CopilotAccessPolicy,
+    @Optional() private readonly realtime?: RealtimePublisher
   ) {}
 
   private parseTaskPayload(payload: unknown): TranscriptionPayloadV2 {
@@ -252,6 +257,7 @@ export class CopilotTranscriptionService {
       modelId: model,
     });
     await this.models.copilotTranscriptTask.markRunning(task.id);
+    this.publishTaskChanged(workspaceId, task.id, AiJobStatus.running);
 
     return { id: task.id, status: AiJobStatus.running, infos };
   }
@@ -294,6 +300,7 @@ export class CopilotTranscriptionService {
       retryOf: task.actionRunId ?? undefined,
     });
     await this.models.copilotTranscriptTask.markRunning(taskId);
+    this.publishTaskChanged(workspaceId, taskId, AiJobStatus.running);
     return {
       id: taskId,
       status: AiJobStatus.running,
@@ -389,6 +396,11 @@ export class CopilotTranscriptionService {
         },
         onRunCreated: async ({ runId }) => {
           await this.models.copilotTranscriptTask.markRunning(taskId, runId);
+          this.publishTaskChanged(
+            task.workspaceId,
+            taskId,
+            AiJobStatus.running
+          );
         },
         prepareStructuredRoutes: {
           stepId: 'transcribe',
@@ -425,6 +437,7 @@ export class CopilotTranscriptionService {
         protectedResult: parsedResult,
         errorCode: null,
       });
+      this.publishTaskChanged(task.workspaceId, taskId, AiJobStatus.finished);
     } catch (error) {
       await this.models.copilotTranscriptTask.complete(taskId, {
         status: 'failed',
@@ -434,7 +447,27 @@ export class CopilotTranscriptionService {
         errorCode:
           error instanceof Error ? error.message : 'transcript_task_failed',
       });
+      this.publishTaskChanged(
+        task.workspaceId,
+        taskId,
+        AiJobStatus.failed,
+        error instanceof Error ? error.message : 'transcript_task_failed'
+      );
       throw error;
     }
+  }
+
+  private publishTaskChanged(
+    workspaceId: string,
+    taskId: string,
+    status: AiJobStatus,
+    error?: string
+  ) {
+    this.realtime?.publish(
+      'copilot.transcript.task.changed',
+      { workspaceId, taskId },
+      { taskId, status, error },
+      { room: realtimeTranscriptTaskRoom(workspaceId, taskId) }
+    );
   }
 }
