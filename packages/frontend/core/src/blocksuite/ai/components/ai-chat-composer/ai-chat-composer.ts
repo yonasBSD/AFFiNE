@@ -428,13 +428,8 @@ export class AIChatComposer extends SignalWatcher(
   };
 
   private readonly addSelectedContextChip = async () => {
-    const {
-      attachments = [],
-      snapshot,
-      combinedElementsMarkdown,
-      docs = [],
-      html,
-    } = this.chatContextValue;
+    const { attachments, snapshot, combinedElementsMarkdown, docs, html } =
+      this.chatContextValue;
     await this.removeSelectedContextChip();
     const chip: SelectedContextChip = {
       uuid: uuidv4(),
