@@ -7,6 +7,14 @@ export interface CacheSetOptions {
   ttl?: number;
 }
 
+const GET_AND_DELETE_LUA = `
+local value = redis.call("GET", KEYS[1])
+if value then
+  redis.call("DEL", KEYS[1])
+end
+return value
+`;
+
 export function isValidCacheTtl(ttl: unknown): ttl is number {
   return typeof ttl === 'number' && Number.isSafeInteger(ttl) && ttl > 0;
 }
@@ -32,11 +40,14 @@ export class CacheProvider {
     value: T,
     opts: CacheSetOptions = {}
   ): Promise<boolean> {
-    if (opts.ttl) {
+    if (isValidCacheTtl(opts.ttl)) {
       return this.redis
         .set(key, JSON.stringify(value), 'PX', opts.ttl)
         .then(() => true)
         .catch(() => false);
+    }
+    if (opts.ttl !== undefined) {
+      return false;
     }
 
     return this.redis
@@ -58,11 +69,14 @@ export class CacheProvider {
     value: T,
     opts: CacheSetOptions = {}
   ): Promise<boolean> {
-    if (opts.ttl) {
+    if (isValidCacheTtl(opts.ttl)) {
       return this.redis
         .set(key, JSON.stringify(value), 'PX', opts.ttl, 'NX')
         .then(v => !!v)
         .catch(() => false);
+    }
+    if (opts.ttl !== undefined) {
+      return false;
     }
 
     return this.redis
@@ -76,6 +90,13 @@ export class CacheProvider {
       .del(key)
       .then(v => v > 0)
       .catch(() => false);
+  }
+
+  async getAndDelete<T = unknown>(key: string): Promise<T | undefined> {
+    return this.redis
+      .eval(GET_AND_DELETE_LUA, 1, key)
+      .then(v => (typeof v === 'string' ? JSON.parse(v) : undefined))
+      .catch(() => undefined);
   }
 
   async has(key: string): Promise<boolean> {

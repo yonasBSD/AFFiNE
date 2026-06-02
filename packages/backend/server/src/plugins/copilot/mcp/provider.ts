@@ -190,6 +190,10 @@ export class WorkspaceMcpProvider {
         const abortedAfterDocs = abortIfNeeded(options.signal);
         if (abortedAfterDocs) return abortedAfterDocs;
 
+        if (!docs || docs.length === 0) {
+          return toolText('No matching documents found.');
+        }
+
         return {
           content: docs.map(doc => ({
             type: 'text',
@@ -229,6 +233,10 @@ export class WorkspaceMcpProvider {
 
         const abortedAfterDocs = abortIfNeeded(options.signal);
         if (abortedAfterDocs) return abortedAfterDocs;
+
+        if (!docs || docs.length === 0) {
+          return toolText('No matching documents found.');
+        }
 
         return {
           content: docs.map(doc => ({
